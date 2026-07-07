@@ -287,6 +287,39 @@
     font-family:var(--font-mono); font-size:11px; letter-spacing:.08em;
   }
 
+  /* ---------- Fairness info panel ---------- */
+  .fairness-box{
+    margin-top:20px; width:100%;
+    border:1px solid var(--line-soft);
+    background:var(--panel-2);
+  }
+  .fairness-box summary{
+    cursor:pointer; padding:11px 16px;
+    font-family:var(--font-mono); font-size:11.5px; letter-spacing:.06em;
+    color:var(--muted); list-style:none; user-select:none;
+    display:flex; align-items:center; gap:8px;
+  }
+  .fairness-box summary::-webkit-details-marker{ display:none; }
+  .fairness-box summary::before{
+    content:'▸'; color:var(--orange); transition:transform .15s;
+  }
+  .fairness-box[open] summary::before{ transform:rotate(90deg); }
+  .fairness-box summary:hover{ color:var(--text); }
+  .fairness-content{
+    padding:4px 16px 16px; font-size:12.5px; color:var(--muted); line-height:1.7;
+  }
+  .fairness-content p{ margin:0 0 10px; }
+  .fairness-content p:last-child{ margin-bottom:0; }
+  .fairness-content code{
+    background:var(--panel); border:1px solid var(--line); padding:1px 5px;
+    font-family:var(--font-mono); font-size:11.5px; color:var(--orange);
+  }
+  .fairness-content kbd{
+    background:var(--panel); border:1px solid var(--line); border-bottom-width:2px;
+    padding:1px 6px; font-family:var(--font-mono); font-size:11px; color:var(--text);
+  }
+  .fairness-content a{ font-family:var(--font-mono); font-size:12px; }
+
   @media (prefers-reduced-motion: reduce){
     #wheelSvg{ transition-duration:.6s; }
   }
@@ -340,6 +373,17 @@
           <div class="rl">Résultat</div>
           <div class="rv" id="resultValue">—</div>
         </div>
+
+        <details class="fairness-box">
+          <summary>ℹ Comment fonctionne le tirage ?</summary>
+          <div class="fairness-content">
+            <p>Le tirage utilise <code>Math.random()</code>, le générateur aléatoire natif du navigateur. Chaque option a exactement la même probabilité de sortir, quelle que soit sa position sur la roue.</p>
+            <p>Tout le calcul se fait <b>dans ce fichier, côté client</b> : aucun serveur externe, aucune donnée envoyée nulle part. Tu peux vérifier toi-même en ouvrant le code source (clic droit → « Afficher le code source de la page », ou <kbd>F12</kbd>).</p>
+            <p>Le lien de partage encode uniquement le titre, les options et les réglages — jamais un résultat pré-calculé. Chaque personne qui ouvre le lien et clique sur la roue obtient un tirage indépendant.</p>
+            <p><a href="https://github.com/TON-COMPTE/TON-REPO" target="_blank" rel="noopener">Voir le code source sur GitHub →</a></p>
+            <!-- ↑ Remplace le lien ci-dessus par l'URL de ton dépôt GitHub -->
+          </div>
+        </details>
       </div>
     </div>
   </div>
