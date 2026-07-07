@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roue d'événement — BeamNG.drive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c0d;
+    --bg-grid: rgba(255,90,31,0.035);
+    --panel:#15181a;
+    --panel-2:#1c2023;
+    --line:#2a2f33;
+    --line-soft:#202427;
+    --orange:#ff5a1f;
+    --orange-dim:#c6431b;
+    --yellow:#f4b400;
+    --text:#ece9e4;
+    --muted:#888e93;
+    --muted-2:#5c6266;
+    --danger:#e0402e;
+    --radius:2px;
+    --font-display:'Rajdhani',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0/100% 42px,
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  ::selection{ background:var(--orange); color:#111; }
+
+  a{ color:var(--yellow); }
+
+  .hazard{
+    height:6px;
+    background:repeating-linear-gradient(135deg, var(--orange) 0 14px, #111 14px 28px);
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:flex; align-items:baseline; gap:10px;
+    font-family:var(--font-display);
+    letter-spacing:.04em;
+  }
+  .brand .mark{
+    color:var(--orange); font-weight:700; font-size:20px;
+  }
+  .brand .sub{
+    color:var(--muted); font-size:12px; font-family:var(--font-mono);
+    text-transform:uppercase; letter-spacing:.12em;
+  }
+  .header-actions{ display:flex; gap:10px; }
+
+  /* ---------- Layout ---------- */
+  main{
+    max-width:1180px; margin:0 auto; padding:32px 24px 80px;
+    display:grid; grid-template-columns:1.15fr .85fr; gap:24px;
+  }
+  @media (max-width:900px){
+    main{ grid-template-columns:1fr; padding:20px 16px 60px; }
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .card + .card{ margin-top:20px; }
+  .card-body{ padding:22px 24px; }
+  .card-label{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.14em;
+    color:var(--muted-2); text-transform:uppercase; margin:0 0 14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .card-label::before{ content:''; width:8px; height:8px; background:var(--orange); display:inline-block; }
+
+  /* ---------- Event panel (left) ---------- */
+  .banner-wrap{
+    width:100%; aspect-ratio:16/6; overflow:hidden; background:var(--panel-2);
+    border-bottom:1px solid var(--line); display:none;
+  }
+  .banner-wrap.show{ display:block; }
+  .banner-wrap img{ width:100%; height:100%; object-fit:cover; display:block; filter:saturate(1.05) contrast(1.05); }
+
+  .event-head{ padding:24px 24px 4px; }
+  #eventTitleOut{
+    font-family:var(--font-display); font-weight:700; font-size:clamp(24px,4vw,34px);
+    margin:0 0 6px; letter-spacing:.01em; line-height:1.1;
+  }
+  .event-meta{
+    display:flex; flex-wrap:wrap; gap:14px 22px;
+    font-family:var(--font-mono); font-size:12.5px; color:var(--muted);
+    margin-bottom:14px;
+  }
+  .event-meta span b{ color:var(--text); font-weight:500; }
+  .event-meta .dot{ color:var(--orange-dim); }
+
+  #eventDiscordBtn{
+    display:none; align-items:center; gap:8px;
+    background:transparent; color:var(--text);
+    border:1px solid var(--line); padding:9px 14px;
+    font-family:var(--font-body); font-size:13.5px; font-weight:600;
+    text-decoration:none; border-radius:var(--radius);
+    transition:border-color .15s, color .15s;
+  }
+  #eventDiscordBtn.show{ display:inline-flex; }
+  #eventDiscordBtn:hover{ border-color:var(--orange); color:var(--orange); }
+  #eventDiscordBtn svg{ width:15px; height:15px; fill:currentColor; }
+
+  #eventDescOut{
+    display:none;
+    margin:16px 24px 0; padding:14px 16px;
+    border-left:2px solid var(--orange-dim);
+    background:var(--panel-2);
+    color:var(--muted);
+    font-size:13.5px; line-height:1.6; white-space:pre-wrap;
+  }
+  #eventDescOut.show{ display:block; }
+
+  /* ---------- Wheel ---------- */
+  .wheel-zone{
+    padding:30px 24px 28px; display:flex; flex-direction:column; align-items:center;
+  }
+  .wheel-frame{
+    position:relative; width:min(420px, 88vw); aspect-ratio:1/1;
+  }
+  .pointer{
+    position:absolute; top:-4px; left:50%; transform:translateX(-50%);
+    width:0; height:0; z-index:5;
+    border-left:14px solid transparent;
+    border-right:14px solid transparent;
+    border-top:24px solid var(--yellow);
+    filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));
+  }
+  #wheelSvg{
+    width:100%; height:100%; display:block;
+    filter:drop-shadow(0 8px 24px rgba(0,0,0,.5));
+    transition:transform 4.2s cubic-bezier(.14,.72,.14,1);
+  }
+  .hub{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:64px; height:64px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #3a3f43, #16191a 70%);
+    border:3px solid var(--orange);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; z-index:6;
+    box-shadow:0 0 0 4px rgba(255,90,31,.12);
+  }
+  .hub:hover{ box-shadow:0 0 0 7px rgba(255,90,31,.18); }
+  .hub:active{ transform:translate(-50%,-50%) scale(.96); }
+  .hub svg{ width:22px; height:22px; fill:var(--orange); }
+  .hub.spinning{ pointer-events:none; opacity:.75; }
+  .hub .bolt{ position:absolute; width:5px; height:5px; background:#0a0c0d; border-radius:50%; }
+
+  .empty-wheel{
+    color:var(--muted); font-family:var(--font-mono); font-size:12.5px;
+    text-align:center; padding:20px; border:1px dashed var(--line); margin-top:14px;
+  }
+
+  .spin-caption{
+    margin-top:18px; font-family:var(--font-mono); font-size:11.5px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--muted-2);
+  }
+
+  .result-banner{
+    margin-top:18px; width:100%; text-align:center;
+    padding:14px 16px;
+    border:1px solid var(--orange);
+    background:repeating-linear-gradient(-45deg, rgba(255,90,31,.08) 0 10px, transparent 10px 20px);
+    display:none;
+  }
+  .result-banner.show{ display:block; animation:popin .35s ease; }
+  .result-banner .rl{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; color:var(--yellow);
+    text-transform:uppercase; margin-bottom:4px;
+  }
+  .result-banner .rv{
+    font-family:var(--font-display); font-weight:700; font-size:26px;
+  }
+  @keyframes popin{ from{ transform:scale(.9); opacity:0;} to{ transform:scale(1); opacity:1;} }
+
+  /* ---------- Config panel (right) ---------- */
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block; font-family:var(--font-mono); font-size:11px;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+    margin-bottom:7px;
+  }
+  .field input[type=text],
+  .field input[type=url],
+  .field input[type=datetime-local],
+  .field textarea{
+    width:100%; background:var(--panel-2); border:1px solid var(--line);
+    color:var(--text); padding:10px 12px; font-family:var(--font-body);
+    font-size:13.5px; border-radius:var(--radius);
+  }
+  .field input:focus, .field textarea:focus{
+    outline:none; border-color:var(--orange);
+  }
+  .field textarea{ resize:vertical; min-height:120px; font-family:var(--font-mono); line-height:1.7; }
+  .field .hint{ font-size:11.5px; color:var(--muted-2); margin-top:6px; font-family:var(--font-mono); }
+  .opt-count{ float:right; color:var(--muted-2); text-transform:none; letter-spacing:0; }
+
+  .btn{
+    font-family:var(--font-body); font-weight:600; font-size:13.5px;
+    padding:10px 16px; border-radius:var(--radius); border:1px solid var(--line);
+    background:transparent; color:var(--text); cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px;
+    transition:border-color .15s, background .15s, color .15s;
+  }
+  .btn:hover{ border-color:var(--muted); }
+  .btn:focus-visible{ outline:2px solid var(--yellow); outline-offset:2px; }
+  .btn-primary{ background:var(--orange); border-color:var(--orange); color:#141414; }
+  .btn-primary:hover{ background:#ff6c37; border-color:#ff6c37; }
+  .btn-ghost{ color:var(--muted); }
+  .btn-ghost:hover{ color:var(--text); }
+  .btn-sm{ padding:7px 11px; font-size:12.5px; }
+
+  .row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .row.between{ justify-content:space-between; align-items:center; }
+
+  .share-row{
+    margin-top:6px; display:flex; gap:8px;
+  }
+  .share-row input{
+    flex:1; background:var(--panel-2); border:1px solid var(--line); color:var(--muted);
+    font-family:var(--font-mono); font-size:12px; padding:9px 10px; border-radius:var(--radius);
+  }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(12px);
+    background:var(--panel-2); border:1px solid var(--orange); color:var(--text);
+    font-family:var(--font-mono); font-size:12.5px; padding:10px 16px;
+    opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+    z-index:50;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .presentation #configCard{ display:none; }
+  .presentation main{
+    grid-template-columns: 1fr;
+    max-width: 640px;
+  }
+  .presentation-toggle{
+    display:flex; align-items:center; gap:8px;
+  }
+
+  .checkbox-row{
+    display:flex; align-items:flex-start; gap:10px;
+    margin-bottom:14px; cursor:pointer;
+  }
+  .checkbox-row input[type=checkbox]{
+    margin-top:3px; width:15px; height:15px; accent-color:var(--orange); cursor:pointer;
+  }
+  .checkbox-row .cb-text{ font-size:13px; color:var(--text); line-height:1.5; }
+  .checkbox-row .cb-text small{ display:block; color:var(--muted-2); font-family:var(--font-mono); font-size:11px; margin-top:2px; }
+
+  .drawn-list{
+    margin-top:2px; display:flex; flex-wrap:wrap; gap:6px;
+  }
+  .drawn-chip{
+    font-family:var(--font-mono); font-size:11px; color:var(--muted);
+    border:1px solid var(--line); padding:4px 8px; border-radius:var(--radius);
+    text-decoration:line-through;
+  }
+
+  footer{
+    text-align:center; padding:26px; color:var(--muted-2);
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.08em;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    #wheelSvg{ transition-duration:.6s; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hazard"></div>
+
+<header>
+  <div class="brand">
+    <span class="mark">BM◈</span>
+    <span class="sub">Roue d'événement</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-sm btn-ghost" id="toggleEditBtn" type="button">Modifier</button>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- LEFT: presentation / wheel -->
+  <div>
+    <div class="card">
+      <div class="banner-wrap" id="bannerWrap"><img id="bannerImg" alt=""></div>
+      <div class="event-head">
+        <h1 id="eventTitleOut">Roue d'événement BeamNG</h1>
+        <div class="event-meta">
+          <span id="metaAuthor" style="display:none;">Organisé par <b id="metaAuthorVal"></b></span>
+          <span class="dot" id="metaDot1" style="display:none;">·</span>
+          <span id="metaDate" style="display:none;"><b id="metaDateVal"></b></span>
+        </div>
+        <a href="#" target="_blank" rel="noopener" id="eventDiscordBtn">
+          <svg viewBox="0 0 24 24"><path d="M20 4.4a18 18 0 0 0-4.4-1.4l-.3.6a15 15 0 0 1 3.9 1.3A16.6 16.6 0 0 0 12 3.4a16.6 16.6 0 0 0-7.2 1.5A15 15 0 0 1 8.7 3.6l-.3-.6A18 18 0 0 0 4 4.4C1.6 8 1 11.5 1.2 15c1.5 1.2 3.4 1.9 5.3 2.3l.7-1.2c-.8-.3-1.5-.7-2.2-1.2l.3-.3c3.9 1.9 8.2 1.9 12 0l.3.3c-.7.5-1.4.9-2.2 1.2l.7 1.2c1.9-.4 3.8-1.1 5.3-2.3.3-4-.5-7.5-2.6-10.6ZM8.7 13.4c-.9 0-1.6-.9-1.6-1.9 0-1.1.7-2 1.6-2s1.7.9 1.6 2c0 1-.7 1.9-1.6 1.9Zm6.6 0c-.9 0-1.6-.9-1.6-1.9 0-1.1.7-2 1.6-2s1.6.9 1.6 2c0 1-.7 1.9-1.6 1.9Z"/></svg>
+          Rejoindre le Discord
+        </a>
+      </div>
+      <div id="eventDescOut"></div>
+
+      <div class="wheel-zone">
+        <div class="wheel-frame">
+          <div class="pointer"></div>
+          <svg id="wheelSvg" viewBox="0 0 300 300"></svg>
+          <div class="hub" id="spinBtn" role="button" tabindex="0" aria-label="Faire tourner la roue">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+        <div class="empty-wheel" id="emptyWheelMsg" style="display:none;">Ajoute au moins 2 options dans le panneau de configuration →</div>
+        <div class="spin-caption">Clique sur le moyeu pour lancer le tirage</div>
+        <div class="result-banner" id="resultBanner">
+          <div class="rl">Résultat</div>
+          <div class="rv" id="resultValue">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: config -->
+  <div id="configCard">
+    <div class="card">
+      <div class="card-body">
+        <p class="card-label">Informations événement</p>
+
+        <div class="field">
+          <label for="inputTitle">Titre de l'événement</label>
+          <input type="text" id="inputTitle" placeholder="Ex : Tirage carte du soir">
+        </div>
+
+        <div class="field">
+          <label for="inputAuthor">Auteur / organisateur</label>
+          <input type="text" id="inputAuthor" placeholder="Ex : Raptorjeff">
+        </div>
+
+        <div class="field">
+          <label for="inputDate">Date / heure</label>
+          <input type="datetime-local" id="inputDate">
+        </div>
+
+        <div class="field">
+          <label for="inputDiscord">Lien serveur Discord</label>
+          <input type="url" id="inputDiscord" placeholder="https://discord.gg/...">
+        </div>
+
+        <div class="field">
+          <label for="inputBanner">Image de bannière (URL)</label>
+          <input type="url" id="inputBanner" placeholder="https://...jpg">
+        </div>
+
+        <div class="field">
+          <label for="inputDescription">Description / règles du tirage</label>
+          <textarea id="inputDescription" style="font-family:var(--font-body); min-height:80px;" placeholder="Ex : Chaque participant tourne une fois, le mod affiché doit être installé avant l'event."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <p class="card-label">Options de la roue <span class="opt-count" id="optCount">0</span></p>
+        <div class="field" style="margin-bottom:8px;">
+          <textarea id="inputOptions" placeholder="mickachou&#10;raptorjeff&#10;sterlings&#10;tom_du_01" spellcheck="false"></textarea>
+          <div class="hint">Une option par ligne. Peut être des pseudos, cartes, mods, règles au choix, etc.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <p class="card-label">Comportement du tirage</p>
+        <label class="checkbox-row" for="removeOnDraw">
+          <input type="checkbox" id="removeOnDraw">
+          <span class="cb-text">Retirer le gagnant de la roue après le tirage
+            <small>Sinon, il reste dans la roue et peut ressortir plusieurs fois</small>
+          </span>
+        </label>
+        <div class="row between" id="drawnRow" style="display:none;">
+          <div class="drawn-list" id="drawnList"></div>
+          <button class="btn btn-sm btn-ghost" id="restoreDrawnBtn" type="button">Remettre tout en jeu</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <p class="card-label">Partage</p>
+        <div class="row">
+          <button class="btn btn-primary" id="shareBtn" type="button">Générer le lien</button>
+          <button class="btn btn-ghost" id="resetBtn" type="button">Réinitialiser</button>
+        </div>
+        <div class="share-row">
+          <input type="text" id="shareOutput" readonly value="Clique sur « Générer le lien »">
+          <button class="btn btn-sm" id="copyBtn" type="button">Copier</button>
+        </div>
+        <div class="hint" style="margin-top:10px;">Toutes les infos et les options sont encodées directement dans le lien : aucune donnée n'est stockée sur un serveur.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>ROUE D'ÉVÉNEMENT — OUTIL COMMUNAUTAIRE NON OFFICIEL — BEAMNG.DRIVE</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+
+  const els = {
+    title: $('inputTitle'), author: $('inputAuthor'), date: $('inputDate'),
+    discord: $('inputDiscord'), banner: $('inputBanner'), description: $('inputDescription'),
+    options: $('inputOptions'),
+    titleOut: $('eventTitleOut'), metaAuthor: $('metaAuthor'), metaAuthorVal: $('metaAuthorVal'),
+    metaDate: $('metaDate'), metaDateVal: $('metaDateVal'), metaDot1: $('metaDot1'),
+    discordBtn: $('eventDiscordBtn'), bannerWrap: $('bannerWrap'), bannerImg: $('bannerImg'),
+    descOut: $('eventDescOut'), optCount: $('optCount'),
+    emptyMsg: $('emptyWheelMsg'), wheelSvg: $('wheelSvg'), spinBtn: $('spinBtn'),
+    resultBanner: $('resultBanner'), resultValue: $('resultValue'),
+    shareBtn: $('shareBtn'), shareOutput: $('shareOutput'), copyBtn: $('copyBtn'),
+    resetBtn: $('resetBtn'), toggleEditBtn: $('toggleEditBtn'), toast: $('toast'),
+    app: $('app'),
+    removeOnDraw: $('removeOnDraw'), drawnRow: $('drawnRow'), drawnList: $('drawnList'),
+    restoreDrawnBtn: $('restoreDrawnBtn')
+  };
+
+  const SLICE_COLORS = ['#20242a','#ff5a1f','#2b3036','#f4b400'];
+  const SLICE_TEXT   = ['#ece9e4','#151515','#ece9e4','#151515'];
+
+  let rotation = 0;
+  let spinning = false;
+  let drawnIndices = new Set();
+
+  function getOptions(){
+    return els.options.value.split('\n').map(s => s.trim()).filter(Boolean);
+  }
+
+  // returns [{text, i}] for options still active in the wheel (excludes drawn ones if the option is on)
+  function getActiveEntries(){
+    const all = getOptions();
+    if(!els.removeOnDraw.checked) return all.map((text, i) => ({ text, i }));
+    return all.map((text, i) => ({ text, i })).filter(e => !drawnIndices.has(e.i));
+  }
+
+  function renderDrawnList(){
+    const all = getOptions();
+    const drawn = [...drawnIndices].filter(i => i < all.length);
+    els.drawnRow.style.display = (els.removeOnDraw.checked && drawn.length) ? 'flex' : 'none';
+    els.drawnList.innerHTML = drawn.map(i => `<span class="drawn-chip">${escapeHTML(all[i])}</span>`).join('');
+  }
+
+  function escapeHTML(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function polar(cx, cy, r, angleDeg){
+    const a = (angleDeg - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+  }
+
+  function renderWheel(){
+    const allCount = getOptions().length;
+    els.optCount.textContent = allCount;
+    renderDrawnList();
+
+    const entries = getActiveEntries();
+    const n = entries.length;
+
+    if(allCount < 2){
+      els.wheelSvg.innerHTML = '';
+      els.emptyMsg.style.display = 'block';
+      els.emptyMsg.textContent = "Ajoute au moins 2 options dans le panneau de configuration →";
+      els.spinBtn.style.opacity = '.4';
+      els.spinBtn.style.pointerEvents = 'none';
+      return;
+    }
+    if(n < 2){
+      els.wheelSvg.innerHTML = '';
+      els.emptyMsg.style.display = 'block';
+      els.emptyMsg.textContent = "Tout le monde a déjà été tiré. Clique sur « Remettre tout en jeu ».";
+      els.spinBtn.style.opacity = '.4';
+      els.spinBtn.style.pointerEvents = 'none';
+      return;
+    }
+    els.emptyMsg.style.display = 'none';
+    els.spinBtn.style.opacity = '1';
+    els.spinBtn.style.pointerEvents = 'auto';
+
+    const slice = 360 / n;
+    const cx = 150, cy = 150, r = 148;
+    let svg = '';
+
+    for(let i = 0; i < n; i++){
+      const start = i * slice;
+      const end = start + slice;
+      const mid = start + slice / 2;
+      const p1 = polar(cx, cy, r, end);
+      const p2 = polar(cx, cy, r, start);
+      const largeArc = slice > 180 ? 1 : 0;
+      const path = `M ${cx} ${cy} L ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${r} ${r} 0 ${largeArc} 0 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z`;
+      const fill = SLICE_COLORS[i % SLICE_COLORS.length];
+      const textFill = SLICE_TEXT[i % SLICE_TEXT.length];
+      const tp = polar(cx, cy, r * 0.62, mid);
+      const fontSize = n > 14 ? 8 : n > 9 ? 10 : n > 6 ? 12 : 14;
+      const label = entries[i].text.length > 16 ? entries[i].text.slice(0, 15) + '…' : entries[i].text;
+
+      svg += `<path d="${path}" fill="${fill}" stroke="#0a0c0d" stroke-width="1.5"></path>`;
+      svg += `<text x="${tp.x.toFixed(2)}" y="${tp.y.toFixed(2)}" fill="${textFill}" font-size="${fontSize}" font-family="JetBrains Mono, monospace" font-weight="500" text-anchor="middle" dominant-baseline="middle" transform="rotate(${mid.toFixed(2)} ${tp.x.toFixed(2)} ${tp.y.toFixed(2)})">${escapeHTML(label)}</text>`;
+    }
+    svg += `<circle cx="150" cy="150" r="149" fill="none" stroke="#2a2f33" stroke-width="2"></circle>`;
+    els.wheelSvg.innerHTML = svg;
+  }
+
+  function spin(){
+    const entries = getActiveEntries();
+    if(entries.length < 2 || spinning) return;
+    spinning = true;
+    els.spinBtn.classList.add('spinning');
+    els.resultBanner.classList.remove('show');
+
+    const n = entries.length;
+    const sliceAngle = 360 / n;
+    const extraTurns = 5 + Math.floor(Math.random() * 4);
+    const randomOffset = Math.random() * 360;
+    rotation += extraTurns * 360 + randomOffset;
+
+    els.wheelSvg.style.transform = `rotate(${rotation}deg)`;
+
+    setTimeout(() => {
+      const normalized = ((rotation % 360) + 360) % 360;
+      const landedFromTop = ((360 - normalized) % 360);
+      const idx = Math.floor(landedFromTop / sliceAngle) % n;
+      const winner = entries[idx];
+      els.resultValue.textContent = winner.text;
+      els.resultBanner.classList.add('show');
+      spinning = false;
+      els.spinBtn.classList.remove('spinning');
+
+      if(els.removeOnDraw.checked){
+        drawnIndices.add(winner.i);
+        renderWheel();
+      }
+    }, 4300);
+  }
+
+  function updatePresentation(){
+    els.titleOut.textContent = els.title.value.trim() || "Roue d'événement BeamNG";
+
+    if(els.author.value.trim()){
+      els.metaAuthorVal.textContent = els.author.value.trim();
+      els.metaAuthor.style.display = 'inline';
+    } else { els.metaAuthor.style.display = 'none'; }
+
+    if(els.date.value){
+      const d = new Date(els.date.value);
+      els.metaDateVal.textContent = d.toLocaleString('fr-FR', { dateStyle:'long', timeStyle:'short' });
+      els.metaDate.style.display = 'inline';
+    } else { els.metaDate.style.display = 'none'; }
+
+    els.metaDot1.style.display = (els.author.value.trim() && els.date.value) ? 'inline' : 'none';
+
+    if(els.discord.value.trim()){
+      els.discordBtn.href = els.discord.value.trim();
+      els.discordBtn.classList.add('show');
+    } else { els.discordBtn.classList.remove('show'); }
+
+    if(els.banner.value.trim()){
+      els.bannerImg.src = els.banner.value.trim();
+      els.bannerWrap.classList.add('show');
+    } else { els.bannerWrap.classList.remove('show'); }
+
+    if(els.description.value.trim()){
+      els.descOut.textContent = els.description.value.trim();
+      els.descOut.classList.add('show');
+    } else { els.descOut.classList.remove('show'); }
+
+    renderWheel();
+  }
+
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    setTimeout(() => els.toast.classList.remove('show'), 2200);
+  }
+
+  function buildShareURL(){
+    const state = {
+      t: els.title.value.trim(),
+      a: els.author.value.trim(),
+      dt: els.date.value,
+      d: els.discord.value.trim(),
+      b: els.banner.value.trim(),
+      desc: els.description.value.trim(),
+      o: getOptions(),
+      r: els.removeOnDraw.checked
+    };
+    const encoded = btoa(encodeURIComponent(JSON.stringify(state)));
+    const url = `${location.origin}${location.pathname}#d=${encoded}`;
+    return url;
+  }
+
+  function loadFromHash(){
+    if(!location.hash.startsWith('#d=')) return false;
+    try{
+      const encoded = location.hash.slice(3);
+      const state = JSON.parse(decodeURIComponent(atob(encoded)));
+      els.title.value = state.t || '';
+      els.author.value = state.a || '';
+      els.date.value = state.dt || '';
+      els.discord.value = state.d || '';
+      els.banner.value = state.b || '';
+      els.description.value = state.desc || '';
+      els.options.value = (state.o || []).join('\n');
+      els.removeOnDraw.checked = !!state.r;
+      return true;
+    }catch(e){
+      console.warn('Lien invalide', e);
+      return false;
+    }
+  }
+
+  function setPresentationMode(on){
+    els.app.classList.toggle('presentation', on);
+    els.toggleEditBtn.textContent = on ? 'Modifier' : 'Aperçu';
+  }
+
+  // events
+  [els.title, els.author, els.date, els.discord, els.banner, els.description, els.options].forEach(el => {
+    el.addEventListener('input', updatePresentation);
+  });
+
+  els.spinBtn.addEventListener('click', spin);
+  els.spinBtn.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); spin(); } });
+
+  els.removeOnDraw.addEventListener('change', renderWheel);
+  els.restoreDrawnBtn.addEventListener('click', () => {
+    drawnIndices.clear();
+    renderWheel();
+  });
+  els.options.addEventListener('input', () => { drawnIndices.clear(); });
+
+  els.shareBtn.addEventListener('click', () => {
+    const url = buildShareURL();
+    els.shareOutput.value = url;
+    navigator.clipboard?.writeText(url).then(() => showToast('Lien copié dans le presse-papiers')).catch(() => showToast('Lien généré'));
+  });
+
+  els.copyBtn.addEventListener('click', () => {
+    if(!els.shareOutput.value || els.shareOutput.value.startsWith('Clique')) return;
+    navigator.clipboard?.writeText(els.shareOutput.value).then(() => showToast('Lien copié'));
+  });
+
+  els.resetBtn.addEventListener('click', () => {
+    [els.title, els.author, els.date, els.discord, els.banner, els.description, els.options].forEach(el => el.value = '');
+    els.options.value = 'mickachou\nraptorjeff\nsterlings\ntom_du_01';
+    els.removeOnDraw.checked = false;
+    drawnIndices.clear();
+    rotation = 0;
+    els.wheelSvg.style.transform = 'rotate(0deg)';
+    els.resultBanner.classList.remove('show');
+    updatePresentation();
+    history.replaceState(null, '', location.pathname);
+  });
+
+  els.toggleEditBtn.addEventListener('click', () => {
+    setPresentationMode(!els.app.classList.contains('presentation'));
+  });
+
+  // init
+  const loaded = loadFromHash();
+  if(!loaded){
+    els.options.value = 'mickachou\nraptorjeff\nsterlings\ntom_du_01';
+  }
+  updatePresentation();
+  setPresentationMode(loaded); // shared links open in clean presentation view
+})();
+</script>
+
+</body>
+</html>
