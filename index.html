@@ -648,6 +648,7 @@
     } else { els.descOut.classList.remove('show'); }
 
     renderWheel();
+    updateAddressBar();
   }
 
   function showToast(msg){
@@ -656,22 +657,58 @@
     setTimeout(() => els.toast.classList.remove('show'), 2200);
   }
 
-  function buildShareURL(){
-    const state = {
-      t: els.title.value.trim(),
-      a: els.author.value.trim(),
-      dt: els.date.value,
-      d: els.discord.value.trim(),
-      b: els.banner.value.trim(),
-      desc: els.description.value.trim(),
-      o: getOptions(),
-      r: els.removeOnDraw.checked
-    };
-    const encoded = btoa(encodeURIComponent(JSON.stringify(state)));
-    const url = `${location.origin}${location.pathname}#d=${encoded}`;
-    return url;
+  // Construit les paramètres d'URL lisibles à partir de l'état actuel du formulaire
+  function buildParams(){
+    const p = new URLSearchParams();
+    if(els.title.value.trim())       p.set('titre', els.title.value.trim());
+    if(els.author.value.trim())      p.set('auteur', els.author.value.trim());
+    if(els.date.value)               p.set('date', els.date.value);
+    if(els.discord.value.trim())     p.set('discord', els.discord.value.trim());
+    if(els.banner.value.trim())      p.set('banniere', els.banner.value.trim());
+    if(els.description.value.trim()) p.set('description', els.description.value.trim());
+
+    const opts = getOptions();
+    if(opts.length){
+      // chaque pseudo est encodé individuellement, pour supporter les virgules dans un nom
+      p.set('participants', opts.map(o => encodeURIComponent(o)).join(','));
+    }
+    if(els.removeOnDraw.checked) p.set('retirer', '1');
+    return p;
   }
 
+  // Met à jour la barre d'adresse en direct, sans recharger la page ni polluer l'historique
+  function updateAddressBar(){
+    const query = buildParams().toString();
+    const url = query ? `${location.pathname}?${query}` : location.pathname;
+    history.replaceState(null, '', url);
+  }
+
+  function buildShareURL(){
+    updateAddressBar();
+    return location.href;
+  }
+
+  // Charge l'état depuis les paramètres lisibles (?titre=...&participants=...)
+  function loadFromQuery(){
+    const params = new URLSearchParams(location.search);
+    if([...params.keys()].length === 0) return false;
+
+    els.title.value = params.get('titre') || '';
+    els.author.value = params.get('auteur') || '';
+    els.date.value = params.get('date') || '';
+    els.discord.value = params.get('discord') || '';
+    els.banner.value = params.get('banniere') || '';
+    els.description.value = params.get('description') || '';
+
+    const participants = params.get('participants') || '';
+    els.options.value = participants
+      ? participants.split(',').map(s => decodeURIComponent(s.trim())).filter(Boolean).join('\n')
+      : '';
+    els.removeOnDraw.checked = params.get('retirer') === '1';
+    return true;
+  }
+
+  // Compat : anciens liens partagés au format #d=<base64>
   function loadFromHash(){
     if(!location.hash.startsWith('#d=')) return false;
     try{
@@ -705,7 +742,7 @@
   els.spinBtn.addEventListener('click', spin);
   els.spinBtn.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); spin(); } });
 
-  els.removeOnDraw.addEventListener('change', renderWheel);
+  els.removeOnDraw.addEventListener('change', () => { renderWheel(); updateAddressBar(); });
   els.restoreDrawnBtn.addEventListener('click', () => {
     drawnIndices.clear();
     renderWheel();
@@ -731,16 +768,16 @@
     rotation = 0;
     els.wheelSvg.style.transform = 'rotate(0deg)';
     els.resultBanner.classList.remove('show');
-    updatePresentation();
     history.replaceState(null, '', location.pathname);
+    updatePresentation();
   });
 
   els.toggleEditBtn.addEventListener('click', () => {
     setPresentationMode(!els.app.classList.contains('presentation'));
   });
 
-  // init
-  const loaded = loadFromHash();
+  // init — priorité au nouveau format lisible (?titre=...&participants=...), puis compat ancien format (#d=...)
+  const loaded = loadFromQuery() || loadFromHash();
   if(!loaded){
     els.options.value = 'mickachou\nraptorjeff\nsterlings\ntom_du_01';
   }
