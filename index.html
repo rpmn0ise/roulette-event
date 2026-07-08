@@ -5,9 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Roue d'événement — BeamNG.drive</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@0,700;0,800;1,600&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
 <style>
+  /*
+    ================================================================
+    SYSTÈME DE THÈMES
+    ----------------------------------------------------------------
+    Chaque thème est un bloc de variables CSS custom activé via
+    l'attribut [data-theme] posé sur <html>. Le thème "classic" (la
+    charte d'origine) vit dans :root et sert de valeurs par défaut.
+    Pour ajouter un nouveau thème : dupliquer un bloc
+    [data-theme="..."], changer les valeurs, puis ajouter une
+    <option> dans le sélecteur #themeSelect (voir HTML plus bas).
+    Le reste du fichier consomme ces variables, donc aucune autre
+    règle n'a besoin d'être touchée pour qu'un thème s'applique.
+    ================================================================
+  */
   :root{
+    /* -- thème "Classique" (par défaut) -- */
     --bg:#0a0c0d;
     --bg-grid: rgba(255,90,31,0.035);
     --panel:#15181a;
@@ -17,14 +32,70 @@
     --orange:#ff5a1f;
     --orange-dim:#c6431b;
     --yellow:#f4b400;
+    --accent-2:#5b9bd5;
     --text:#ece9e4;
     --muted:#888e93;
     --muted-2:#5c6266;
     --danger:#e0402e;
     --radius:2px;
+    --card-shadow:none;
+    --hazard-alt:#111111;
     --font-display:'Rajdhani',sans-serif;
     --font-body:'Inter',sans-serif;
     --font-mono:'JetBrains Mono',monospace;
+    --font-accent:var(--font-display);
+  }
+
+  /* -- thème "Retour De Force" -- interface sombre façon dashboard,
+     coins arrondis, accent orange + lime, typo géométrique -- */
+  html[data-theme="retour-de-force"]{
+    --bg:#0e0f11;
+    --bg-grid: rgba(249,115,22,0.02);
+    --panel:#16181c;
+    --panel-2:#1b1e23;
+    --line:#262a30;
+    --line-soft:#1e2126;
+    --orange:#f97316;
+    --orange-dim:#c2570f;
+    --yellow:#e8f048;
+    --accent-2:#60a5fa;
+    --text:#eef0f4;
+    --muted:#8b93a0;
+    --muted-2:#5a626e;
+    --danger:#ef4444;
+    --radius:12px;
+    --card-shadow:0 10px 34px rgba(0,0,0,.4);
+    --hazard-alt:#0e0f11;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+    --font-accent:var(--font-display);
+  }
+
+  /* -- thème "Le Club" -- ambiance éditoriale/rallye, noir chaud,
+     orange saturé, touches serif/cursive, effet vignette photo -- */
+  html[data-theme="le-club"]{
+    --bg:#0b0a08;
+    --bg-grid: rgba(253,124,2,0.03);
+    --panel:#181309;
+    --panel-2:#1f1810;
+    --line:#332a1a;
+    --line-soft:#241d12;
+    --orange:#fd7c02;
+    --orange-dim:#c85f00;
+    --yellow:#f2ede2;
+    --accent-2:#e0c68a;
+    --text:#f2ede2;
+    --muted:#a99c86;
+    --muted-2:#6b6152;
+    --danger:#e0402e;
+    --radius:6px;
+    --card-shadow:0 16px 40px rgba(0,0,0,.55);
+    --hazard-alt:#f2ede2;
+    --font-display:'Playfair Display',serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+    --font-accent:'Dancing Script',cursive;
   }
 
   *{box-sizing:border-box;}
@@ -37,6 +108,7 @@
     font-family:var(--font-body);
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
+    transition:background-color .25s ease, color .25s ease;
   }
 
   ::selection{ background:var(--orange); color:#111; }
@@ -45,7 +117,17 @@
 
   .hazard{
     height:6px;
-    background:repeating-linear-gradient(135deg, var(--orange) 0 14px, #111 14px 28px);
+    background:repeating-linear-gradient(135deg, var(--orange) 0 14px, var(--hazard-alt) 14px 28px);
+  }
+
+  /* Le Club : ambiance photo/vignette sur les panneaux + logo cursif */
+  html[data-theme="le-club"] .card{
+    background:
+      radial-gradient(130% 160% at 50% -20%, #2a2010 0%, var(--panel) 55%, #0d0a06 100%);
+  }
+  html[data-theme="le-club"] .brand .mark{
+    font-family:var(--font-accent); font-style:italic; font-weight:700;
+    font-size:24px; letter-spacing:0;
   }
 
   /* ---------- Header ---------- */
@@ -66,7 +148,24 @@
     color:var(--muted); font-size:12px; font-family:var(--font-mono);
     text-transform:uppercase; letter-spacing:.12em;
   }
-  .header-actions{ display:flex; gap:10px; }
+  .header-actions{ display:flex; align-items:center; gap:10px; }
+
+  /* ---------- Sélecteur de thème ---------- */
+  .theme-switch{ position:relative; display:inline-flex; align-items:center; }
+  .theme-switch::after{
+    content:'▾'; position:absolute; right:11px; top:50%; transform:translateY(-50%);
+    color:var(--muted); font-size:10px; pointer-events:none;
+  }
+  .theme-select{
+    appearance:none; -webkit-appearance:none;
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.04em;
+    padding:8px 28px 8px 12px; border-radius:var(--radius); cursor:pointer;
+    transition:border-color .15s, color .15s;
+  }
+  .theme-select:hover{ border-color:var(--orange); }
+  .theme-select:focus-visible{ outline:2px solid var(--yellow); outline-offset:2px; }
+  .theme-select option{ background:var(--panel); color:var(--text); }
 
   /* ---------- Layout ---------- */
   main{
@@ -81,7 +180,9 @@
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
+    box-shadow:var(--card-shadow);
     overflow:hidden;
+    transition:background-color .25s ease, border-color .25s ease, box-shadow .25s ease;
   }
   .card + .card{ margin-top:20px; }
   .card-body{ padding:22px 24px; }
@@ -335,6 +436,14 @@
     <span class="sub">Roue d'événement</span>
   </div>
   <div class="header-actions">
+    <div class="theme-switch">
+      <label for="themeSelect" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Thème</label>
+      <select class="theme-select" id="themeSelect">
+        <option value="classic">Classique</option>
+        <option value="retour-de-force">Retour De Force</option>
+        <option value="le-club">Le Club</option>
+      </select>
+    </div>
     <button class="btn btn-sm btn-ghost" id="toggleEditBtn" type="button">Modifier</button>
   </div>
 </header>
@@ -492,11 +601,38 @@
     resetBtn: $('resetBtn'), toggleEditBtn: $('toggleEditBtn'), toast: $('toast'),
     app: $('app'),
     removeOnDraw: $('removeOnDraw'), drawnRow: $('drawnRow'), drawnList: $('drawnList'),
-    restoreDrawnBtn: $('restoreDrawnBtn')
+    restoreDrawnBtn: $('restoreDrawnBtn'), themeSelect: $('themeSelect')
   };
 
-  const SLICE_COLORS = ['#20242a','#ff5a1f','#2b3036','#f4b400'];
-  const SLICE_TEXT   = ['#ece9e4','#151515','#ece9e4','#151515'];
+  // ---------- Thèmes ----------
+  const THEME_KEY = 'rdf_roulette_theme';
+  const THEMES = ['classic', 'retour-de-force', 'le-club'];
+
+  function applyTheme(id, opts = {}){
+    if(!THEMES.includes(id)) id = 'classic';
+    document.documentElement.setAttribute('data-theme', id);
+    els.themeSelect.value = id;
+    if(!opts.skipSave){
+      try{ localStorage.setItem(THEME_KEY, id); }catch(e){ /* stockage indisponible */ }
+    }
+  }
+
+  els.themeSelect.addEventListener('change', () => {
+    applyTheme(els.themeSelect.value);
+    renderWheel();
+    updateAddressBar();
+  });
+
+  // Les couleurs de la roue sont lues depuis les variables CSS du thème actif,
+  // pour que la roue reste cohérente avec l'identité visuelle choisie.
+  function getSliceColors(){
+    const cs = getComputedStyle(document.documentElement);
+    const v = (name, fallback) => (cs.getPropertyValue(name).trim() || fallback);
+    return {
+      colors: [ v('--panel-2', '#20242a'), v('--orange', '#ff5a1f'), v('--line', '#2b3036'), v('--yellow', '#f4b400') ],
+      text:   [ v('--text', '#ece9e4'), '#151515', v('--text', '#ece9e4'), '#151515' ]
+    };
+  }
 
   let rotation = 0;
   let spinning = false;
@@ -562,6 +698,8 @@
     const slice = 360 / n;
     const cx = 150, cy = 150, r = 148;
     let svg = '';
+    const sliceTheme = getSliceColors();
+    const strokeColor = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0a0c0d';
 
     for(let i = 0; i < n; i++){
       const start = i * slice;
@@ -571,16 +709,17 @@
       const p2 = polar(cx, cy, r, start);
       const largeArc = slice > 180 ? 1 : 0;
       const path = `M ${cx} ${cy} L ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${r} ${r} 0 ${largeArc} 0 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z`;
-      const fill = SLICE_COLORS[i % SLICE_COLORS.length];
-      const textFill = SLICE_TEXT[i % SLICE_TEXT.length];
+      const fill = sliceTheme.colors[i % sliceTheme.colors.length];
+      const textFill = sliceTheme.text[i % sliceTheme.text.length];
       const tp = polar(cx, cy, r * 0.62, mid);
       const fontSize = n > 14 ? 8 : n > 9 ? 10 : n > 6 ? 12 : 14;
       const label = entries[i].text.length > 16 ? entries[i].text.slice(0, 15) + '…' : entries[i].text;
 
-      svg += `<path d="${path}" fill="${fill}" stroke="#0a0c0d" stroke-width="1.5"></path>`;
+      svg += `<path d="${path}" fill="${fill}" stroke="${strokeColor}" stroke-width="1.5"></path>`;
       svg += `<text x="${tp.x.toFixed(2)}" y="${tp.y.toFixed(2)}" fill="${textFill}" font-size="${fontSize}" font-family="JetBrains Mono, monospace" font-weight="500" text-anchor="middle" dominant-baseline="middle" transform="rotate(${mid.toFixed(2)} ${tp.x.toFixed(2)} ${tp.y.toFixed(2)})">${escapeHTML(label)}</text>`;
     }
-    svg += `<circle cx="150" cy="150" r="149" fill="none" stroke="#2a2f33" stroke-width="2"></circle>`;
+    const ringColor = getComputedStyle(document.documentElement).getPropertyValue('--line').trim() || '#2a2f33';
+    svg += `<circle cx="150" cy="150" r="149" fill="none" stroke="${ringColor}" stroke-width="2"></circle>`;
     els.wheelSvg.innerHTML = svg;
   }
 
@@ -673,6 +812,8 @@
       p.set('participants', opts.map(o => encodeURIComponent(o)).join(','));
     }
     if(els.removeOnDraw.checked) p.set('retirer', '1');
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'classic';
+    if(currentTheme !== 'classic') p.set('theme', currentTheme);
     return p;
   }
 
@@ -705,6 +846,7 @@
       ? participants.split(',').map(s => decodeURIComponent(s.trim())).filter(Boolean).join('\n')
       : '';
     els.removeOnDraw.checked = params.get('retirer') === '1';
+    if(params.get('theme')) applyTheme(params.get('theme'));
     return true;
   }
 
@@ -775,6 +917,11 @@
   els.toggleEditBtn.addEventListener('click', () => {
     setPresentationMode(!els.app.classList.contains('presentation'));
   });
+
+  // init thème — priorité à ?theme= (géré dans loadFromQuery), sinon dernier choix mémorisé
+  let savedTheme = 'classic';
+  try{ savedTheme = localStorage.getItem(THEME_KEY) || 'classic'; }catch(e){ /* stockage indisponible */ }
+  applyTheme(savedTheme, { skipSave:true });
 
   // init — priorité au nouveau format lisible (?titre=...&participants=...), puis compat ancien format (#d=...)
   const loaded = loadFromQuery() || loadFromHash();
