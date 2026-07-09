@@ -4,7 +4,7 @@ Un outil web autonome (single-file) pour organiser des tirages au sort équitabl
 
 Conçu à l'origine pour la communauté **BeamNG.drive**, mais utilisable pour n'importe quel event Discord ou communautaire.
 
-**[→ Ouvrir la démo](https://TON-COMPTE.github.io/TON-REPO/)** *(remplace ce lien une fois déployé)*
+**[→ Ouvrir la démo](https://rpm-wheel.pages.dev/)**
 
 ---
 
